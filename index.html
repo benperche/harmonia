@@ -701,7 +701,7 @@ function drawCOF(svgId, selIdx, mode, onClickFn) {
     t.setAttribute('font-size', keys[i].name.length > 2 ? '10' : '12');
     t.setAttribute('fill', isSel ? '#2a1a08' : '#5a5040');
     t.setAttribute('pointer-events','none');
-    t.textContent = keys[i].name;
+    t.textContent = mode === 'minor' ? keys[i].name.toLowerCase() : keys[i].name;
 
     g.appendChild(p); g.appendChild(t);
     g.addEventListener('click', () => onClickFn(i));
@@ -1135,14 +1135,16 @@ function findChord() {
 // ═══════════════════ CONTROLS
 
 function setMode(mode) {
-  S.mode = mode; S.keyIndex = 0; S.enhOverride = null;
+  S.mode = mode; S.enhOverride = null;
+  // keyIndex is preserved — same position in COF_MAJ and COF_MIN = same key signature
   document.getElementById('btn-major').classList.toggle('active', mode==='major');
   document.getElementById('btn-minor').classList.toggle('active', mode==='minor');
   renderChords();
 }
 
 function setModeLookup(mode) {
-  S.luMode = mode; S.luKeyIndex = 0;
+  S.luMode = mode;
+  // luKeyIndex preserved — same position = same key signature
   document.getElementById('btn-major-lu').classList.toggle('active', mode==='major');
   document.getElementById('btn-minor-lu').classList.toggle('active', mode==='minor');
   renderLookupCOF();
