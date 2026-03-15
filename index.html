@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harmonia — Roman Numeral Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:         #f5f0e8;
+  --bg2:        #ede7d9;
+  --bg3:        #e4dccb;
+  --surface:    #faf7f2;
+  --border:     #c8bfaa;
+  --border2:    #a89880;
+  --ink:        #2a2218;
+  --ink2:       #5a5040;
+  --ink3:       #8a7d68;
+  --red:        #8b2020;
+  --red-light:  #b03030;
+  --teal:       #1a5a5a;
+  --gold:       #7a5a10;
+  --purple:     #4a2a6a;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-weight: 300;
+  min-height: 100vh;
+  padding: 18px 14px 50px;
+}
+
+/* Manuscript lines */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: repeating-linear-gradient(
+    0deg, transparent, transparent 27px, rgba(160,140,100,0.07) 28px
+  );
+  pointer-events: none; z-index: 0;
+}
+
+.page-wrap { position: relative; z-index: 1; max-width: 1300px; margin: 0 auto; }
+
+/* ── Header ──────────────────── */
+.site-header {
+  text-align: center;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--border);
+}
+h1 {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 400;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+.site-header p {
+  font-size: 0.74rem;
+  color: var(--ink3);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+/* ── Tabs ────────────────────── */
+.tab-bar {
+  display: flex;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 18px;
+}
+.tab-btn {
+  background: none; border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  padding: 7px 16px;
+  font-family: 'Crimson Pro', serif;
+  font-size: 0.78rem; font-weight: 400;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink3); cursor: pointer;
+  transition: color 0.12s;
+}
+.tab-btn:hover { color: var(--ink2); }
+.tab-btn.active { color: var(--red); border-bottom-color: var(--red); }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Layout ──────────────────── */
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 700px) {
+  .layout { grid-template-columns: 1fr; }
+}
+
+/* ── Panel ───────────────────── */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.panel-title {
+  font-size: 0.64rem; font-weight: 600;
+  letter-spacing: 0.24em; text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 10px; padding-bottom: 7px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── Circle of Fifths ────────── */
+.cof-hit { cursor: pointer; }
+.cof-hit:hover path { filter: brightness(0.93); }
+
+.mode-row { display: flex; gap: 6px; margin-top: 10px; }
+.mode-btn {
+  flex: 1;
+  background: var(--bg2); border: 1px solid var(--border);
+  color: var(--ink3);
+  font-family: 'Crimson Pro', serif; font-size: 0.78rem; font-weight: 400;
+  letter-spacing: 0.1em; padding: 5px 0; border-radius: 2px;
+  cursor: pointer; transition: all 0.12s;
+}
+.mode-btn.active { background: var(--red); border-color: var(--red); color: #fff; }
+
+.enh-row { margin-top: 6px; }
+.enh-btn {
+  width: 100%; background: var(--bg2); border: 1px solid var(--border);
+  color: var(--ink3); font-family: 'Crimson Pro', serif; font-size: 0.76rem;
+  padding: 5px 0; border-radius: 2px; cursor: pointer;
+  transition: border-color 0.12s; letter-spacing: 0.04em;
+}
+.enh-btn:hover { border-color: var(--border2); }
+
+.key-display {
+  text-align: center; margin-top: 10px;
+  font-family: 'IM Fell English', serif; font-size: 1.4rem; color: var(--ink);
+}
+.key-display small {
+  display: block; font-family: 'Crimson Pro', serif;
+  font-size: 0.68rem; color: var(--ink3);
+  letter-spacing: 0.18em; text-transform: uppercase; margin-top: 1px;
+}
+
+/* ── Chord Grid ──────────────── */
+.chord-grid { display: flex; flex-direction: column; gap: 6px; }
+
+.chord-section-label {
+  font-size: 0.62rem; font-weight: 600;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--ink3); padding: 8px 0 3px;
+  border-bottom: 1px solid var(--border); margin-bottom: 2px;
+}
+
+.chord-card {
+  border: 1px solid var(--border); border-radius: 2px;
+  overflow: hidden; background: var(--surface);
+  transition: border-color 0.12s;
+}
+.chord-card:hover { border-color: var(--border2); }
+
+.chord-header {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 11px;
+  background: var(--bg2); border-bottom: 1px solid transparent;
+  cursor: pointer; user-select: none; transition: background 0.1s;
+}
+.chord-header:hover { background: var(--bg3); }
+.chord-card.open .chord-header { border-bottom-color: var(--border); }
+
+.rn {
+  font-family: 'IM Fell English', serif; font-size: 1.05rem;
+  min-width: 64px; color: var(--red);
+}
+.rn.minor-rn { font-style: italic; }
+.rn.secondary { color: var(--purple); }
+
+.chord-name { font-size: 0.78rem; color: var(--ink3); flex: 1; }
+.chord-notes-sum { font-size: 0.8rem; color: var(--ink2); }
+.expand-icon { font-size: 0.58rem; color: var(--ink3); transition: transform 0.18s; }
+.chord-card.open .expand-icon { transform: rotate(180deg); }
+
+/* Inversion table */
+.inv-wrap { display: none; padding: 9px 11px 11px; }
+.chord-card.open .inv-wrap { display: block; }
+
+.inv-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+.inv-table th {
+  text-align: left; font-family: 'Crimson Pro', serif;
+  font-weight: 600; font-size: 0.63rem;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ink3); padding: 0 9px 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+.inv-table td {
+  padding: 5px 9px 5px 0; border-bottom: 1px solid var(--bg3); vertical-align: middle;
+}
+.inv-table tr:last-child td { border-bottom: none; }
+
+.td-bass { font-weight: 600; color: var(--ink); width: 30px; font-size: 0.88rem; }
+.td-rn {
+  font-family: 'IM Fell English', serif; font-size: 0.96rem;
+  color: var(--teal); width: 88px;
+}
+.td-rn.minor-rn { font-style: italic; }
+.td-rn.secondary { color: var(--purple); }
+.td-inv { color: var(--ink3); font-size: 0.74rem; width: 128px; }
+.td-notes { color: var(--ink2); font-size: 0.8rem; }
+.bass-hl { color: var(--red); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.note-seventh { color: var(--ink3); font-style: italic; }
+.row-with7 { background: rgba(200,191,170,0.18); }
+.row-with7 .td-rn { color: var(--gold); }
+.row-triad-only { }
+
+/* ── Lookup tab ──────────────── */
+.lookup-intro { font-size: 0.86rem; color: var(--ink2); margin-bottom: 14px; line-height: 1.65; }
+
+.note-picker { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+.note-pill {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 20px; padding: 5px 13px;
+  font-family: 'Crimson Pro', serif; font-size: 0.86rem;
+  cursor: pointer; transition: all 0.1s; color: var(--ink2); user-select: none;
+}
+.note-pill:hover { border-color: var(--border2); }
+.note-pill.selected { background: var(--red); border-color: var(--red); color: #fff; }
+
+.lookup-actions { display: flex; gap: 7px; margin-bottom: 18px; flex-wrap: wrap; }
+.btn {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 2px;
+  padding: 6px 15px; font-family: 'Crimson Pro', serif;
+  font-size: 0.8rem; letter-spacing: 0.06em;
+  cursor: pointer; color: var(--ink2); transition: all 0.1s;
+}
+.btn:hover { border-color: var(--border2); }
+.btn.primary { background: var(--red); border-color: var(--red); color: #fff; }
+.btn.primary:hover { background: var(--red-light); }
+
+.selected-display {
+  font-size: 0.8rem; color: var(--ink3); margin-bottom: 8px; min-height: 18px;
+}
+.result-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 2px; padding: 11px 13px; margin-bottom: 8px;
+}
+.result-card h3 {
+  font-family: 'IM Fell English', serif; font-size: 1.1rem;
+  font-weight: 400; color: var(--red); margin-bottom: 3px;
+}
+.result-card h3.minor-rn { font-style: italic; }
+.result-card h3.secondary { color: var(--purple); }
+.result-meta { font-size: 0.78rem; color: var(--ink3); margin-bottom: 7px; }
+.result-inv-line { font-size: 0.82rem; color: var(--ink2); margin-bottom: 3px; }
+.no-results { font-size: 0.86rem; color: var(--ink3); font-style: italic; padding: 10px 0; }
+
+/* ── Footer ──────────────────── */
+.footnote {
+  margin-top: 22px; font-size: 0.68rem; color: var(--ink3);
+  line-height: 1.9; border-top: 1px solid var(--border); padding-top: 10px;
+}
+
+/* ── Landscape compact ───────── */
+@media (orientation: landscape) and (max-height: 560px) {
+  body { padding: 8px 12px 24px; }
+  .site-header { margin-bottom: 8px; padding-bottom: 8px; }
+  h1 { font-size: 1.5rem; }
+  .site-header p { display: none; }
+  .layout { grid-template-columns: 210px 1fr; gap: 12px; }
+}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <h1>Harmonia</h1>
+  <p>Roman Numeral Harmony Reference</p>
+</header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="chords" onclick="showTab(this,'chords')">Chord Reference</button>
+  <button class="tab-btn" data-tab="lookup" onclick="showTab(this,'lookup')">Chord Lookup</button>
+</div>
+
+<!-- ══ CHORD REFERENCE ══ -->
+<div class="tab-panel active" id="tab-chords">
+  <div class="layout">
+    <div>
+      <div class="panel">
+        <div class="panel-title">Select Key</div>
+        <svg id="cof-main" viewBox="-140 -140 280 280" width="232" height="232" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div class="mode-row">
+          <button class="mode-btn active" id="btn-major" onclick="setMode('major')">Major</button>
+          <button class="mode-btn" id="btn-minor" onclick="setMode('minor')">Minor</button>
+        </div>
+        <div class="enh-row">
+          <button class="enh-btn" onclick="toggleEnharmonic()">Spelling: <span id="enh-label">Auto</span></button>
+        </div>
+        <div class="key-display" id="key-display">C major<small>Key of C</small></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Diatonic Chords &amp; Inversions</div>
+      <div class="chord-grid" id="chord-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LOOKUP ══ -->
+<div class="tab-panel" id="tab-lookup">
+  <div class="layout">
+    <div>
+      <div class="panel">
+        <div class="panel-title">Key</div>
+        <svg id="cof-lookup" viewBox="-140 -140 280 280" width="232" height="232" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div class="mode-row">
+          <button class="mode-btn active" id="btn-major-lu" onclick="setModeLookup('major')">Major</button>
+          <button class="mode-btn" id="btn-minor-lu" onclick="setModeLookup('minor')">Minor</button>
+        </div>
+        <div class="key-display" id="key-display-lu">C major<small>Key of C</small></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">What chord is this?</div>
+      <p class="lookup-intro">Select the notes present in your chord (by pitch class, regardless of octave), then click <strong>Find Chord</strong>. Results show all diatonic and secondary dominant matches in the chosen key.</p>
+      <div class="note-picker" id="note-picker"></div>
+      <div class="selected-display" id="sel-display">No notes selected</div>
+      <div class="lookup-actions">
+        <button class="btn primary" onclick="findChord()">Find Chord</button>
+        <button class="btn" onclick="clearLookup()">Clear</button>
+      </div>
+      <div id="lookup-results"></div>
+    </div>
+  </div>
+</div>
+
+<p class="footnote">
+  7th shown in <em>(brackets)</em> — shaded rows include the 7th · Figured bass: root = plain; 1st inv = ⁶; 2nd inv = ⁶₄ &nbsp;|&nbsp;
+  With 7th: root = ⁷; 1st inv = ⁶₅; 2nd inv = ⁴₃; 3rd inv = ⁴₂ &nbsp;|&nbsp;
+  Dim. 7th: root = °⁷; inversions = °⁶₅ °⁴₃ °⁴₂ &nbsp;|&nbsp; Underlined note = bass voice
+</p>
+</div>
+
+<script>
+// ═══════════════════ PITCH CLASSES & SPELLINGS
+
+const SH = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+const FL = ['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
+
+function nn(pc, sharp) { return sharp ? SH[((pc%12)+12)%12] : FL[((pc%12)+12)%12]; }
+
+const COF_MAJ = [
+  {name:'C', pc:0, sharps:true},{name:'G', pc:7, sharps:true},
+  {name:'D', pc:2, sharps:true},{name:'A', pc:9, sharps:true},
+  {name:'E', pc:4, sharps:true},{name:'B', pc:11,sharps:true},
+  {name:'F♯',pc:6, sharps:true},{name:'D♭',pc:1, sharps:false},
+  {name:'A♭',pc:8, sharps:false},{name:'E♭',pc:3, sharps:false},
+  {name:'B♭',pc:10,sharps:false},{name:'F', pc:5, sharps:false},
+];
+const COF_MIN = [
+  {name:'A', pc:9, sharps:true},{name:'E', pc:4, sharps:true},
+  {name:'B', pc:11,sharps:true},{name:'F♯',pc:6, sharps:true},
+  {name:'C♯',pc:1, sharps:true},{name:'G♯',pc:8, sharps:true},
+  {name:'D♯',pc:3, sharps:true},{name:'B♭',pc:10,sharps:false},
+  {name:'F', pc:5, sharps:false},{name:'C', pc:0, sharps:false},
+  {name:'G', pc:7, sharps:false},{name:'D', pc:2, sharps:false},
+];
+
+// ═══════════════════ FIGURED BASS TABLES
+// Each chord is stored as a triad with an optional 7th note (in brackets).
+// Inversions cover both the 3-note triad AND the 4-note 7th chord.
+// For 7th-chord inversions the RN suffix carries the figured-bass number
+// WITHOUT a leading ⁷ (e.g. ⁶₅, ⁴₃, ⁴₂ — the ⁷ is implied by root position).
+
+// FB entries: { inv, sufTriad, suf7 }
+//   sufTriad = suffix when playing without the 7th
+//   suf7     = suffix when playing with the 7th (root pos uses plain rn for triads,
+//              but "⁷" for the 7th-chord root position is kept only here to signal it)
+const FB = {
+  // Generic triads that have a diatonic 7th
+  triad7: [
+    {inv:'Root position',         sufTriad:'',    suf7:'⁷'},
+    {inv:'1st inversion',         sufTriad:'⁶',   suf7:'⁶₅'},
+    {inv:'2nd inversion',         sufTriad:'⁶₄',  suf7:'⁴₃'},
+    {inv:'3rd inversion (7th bass)', sufTriad:null, suf7:'⁴₂'},
+  ],
+  // Dominant 7th (same shape)
+  dom7: [
+    {inv:'Root position',         sufTriad:'',    suf7:'⁷'},
+    {inv:'1st inversion',         sufTriad:'⁶',   suf7:'⁶₅'},
+    {inv:'2nd inversion',         sufTriad:'⁶₄',  suf7:'⁴₃'},
+    {inv:'3rd inversion (7th bass)', sufTriad:null, suf7:'⁴₂'},
+  ],
+  // Diminished 7th
+  dim7: [
+    {inv:'Root position',         sufTriad:'',    suf7:'°⁷'},
+    {inv:'1st inversion',         sufTriad:'⁶',   suf7:'°⁶₅'},
+    {inv:'2nd inversion',         sufTriad:'⁶₄',  suf7:'°⁴₃'},
+    {inv:'3rd inversion (7th bass)', sufTriad:null, suf7:'°⁴₂'},
+  ],
+};
+
+// Build inversion rows for a chord that has an optional 7th note.
+// notes3 = [root, 3rd, 5th], note7 = seventh note string or null
+function inversions(rn, fbType, notes3, note7) {
+  const rows = FB[fbType] || FB.triad7;
+  // All 4 notes (with 7th), or 3 without
+  const notes4 = note7 ? [...notes3, note7] : notes3;
+  const result = [];
+
+  rows.forEach((lb, i) => {
+    const has7th = !!note7;
+
+    // 3rd-inversion row only exists when there's a 7th
+    if (i === 3 && !has7th) return;
+
+    // For inversions 0-2 the bass comes from notes3; inversion 3 bass = note7
+    const bassNote = i < 3 ? notes3[i] : note7;
+
+    // Rotate the full 4-note (or 3-note) set so bass is first
+    const src = has7th ? notes4 : notes3;
+    const rotated = [...src.slice(i % src.length), ...src.slice(0, i % src.length)];
+
+    // Without 7th
+    if (lb.sufTriad !== null) {
+      result.push({
+        inv: lb.inv,
+        suf: lb.sufTriad,
+        rnDisplay: rn + lb.sufTriad,
+        bassNote,
+        allNotes: [...notes3.slice(i % 3), ...notes3.slice(0, i % 3)],
+        withSeventh: false,
+      });
+    }
+
+    // With 7th
+    result.push({
+      inv: lb.inv + (has7th ? ' + 7th' : ''),
+      suf: lb.suf7,
+      rnDisplay: rn + lb.suf7,
+      bassNote,
+      allNotes: rotated,
+      withSeventh: true,
+    });
+  });
+
+  return result;
+}
+
+// ═══════════════════ CHORD BUILDER
+// Every chord is defined with its triad intervals + optional 7th interval.
+// The 7th note is shown in brackets and generates extra inversion rows.
+
+function getDiatonicChords(rootPc, mode, useSharp) {
+  const scale = mode === 'major' ? [0,2,4,5,7,9,11] : [0,2,3,5,7,8,10];
+  const pcs = scale.map(s => (rootPc + s) % 12);
+  const lt = (rootPc + 11) % 12; // leading tone (raised 7th)
+
+  // iv7 in minor: interval of minor 7th = 10
+  // Build a chord object. iv7 = interval for the 7th above chord root (or null).
+  function chord(rn, name, rootP, triadIvs, seventh, fbType, min, section) {
+    const triadPcs  = triadIvs.map(iv => (rootP + iv) % 12);
+    const triadNotes = triadPcs.map(p => nn(p, useSharp));
+    const note7Pc   = seventh !== null ? (rootP + seventh) % 12 : null;
+    const note7     = note7Pc !== null ? nn(note7Pc, useSharp) : null;
+    const allPcs    = note7Pc !== null ? [...triadPcs, note7Pc] : triadPcs;
+    return {
+      rn, name, rootP,
+      chordPcs:   allPcs,
+      triadNotes, note7,
+      chordNotes: note7 ? [...triadNotes, note7] : triadNotes,
+      inversions: inversions(rn, fbType, triadNotes, note7),
+      fbType, min, section,
+    };
+  }
+
+  const diatonic = [];
+  const secondary = [];
+
+  if (mode === 'major') {
+    // Diatonic 7ths: I maj7=11, ii min7=10, iii min7=10, IV maj7=11,
+    //                V dom7=10, vi min7=10, vii° half-dim7=9 / full dim7=9
+    diatonic.push(
+      chord('I',    'Tonic',                pcs[0], [0,4,7], 11, 'triad7', false, 'diatonic'),
+      chord('ii',   'Supertonic',           pcs[1], [0,3,7], 10, 'triad7', true,  'diatonic'),
+      chord('iii',  'Mediant',              pcs[2], [0,3,7], 10, 'triad7', true,  'diatonic'),
+      chord('IV',   'Subdominant',          pcs[3], [0,4,7], 11, 'triad7', false, 'diatonic'),
+      chord('V',    'Dominant',             pcs[4], [0,4,7], 10, 'dom7',   false, 'diatonic'),
+      chord('vi',   'Submediant',           pcs[5], [0,3,7], 10, 'triad7', true,  'diatonic'),
+      chord('vii°', 'Leading-tone',         lt,     [0,3,6],  9, 'dim7',   true,  'diatonic'),
+    );
+    [
+      {of:'ii',  targetIdx:1},
+      {of:'iii', targetIdx:2},
+      {of:'IV',  targetIdx:3},
+      {of:'V',   targetIdx:4},
+      {of:'vi',  targetIdx:5},
+    ].forEach(s => {
+      const domRoot = (pcs[s.targetIdx] + 7) % 12;
+      secondary.push(
+        chord(`V/${s.of}`, `Secondary dom. of ${s.of}`, domRoot, [0,4,7], 10, 'dom7', false, 'secondary'),
+      );
+    });
+  } else {
+    // Natural minor diatonic 7ths
+    diatonic.push(
+      chord('i',    'Tonic',                    pcs[0], [0,3,7], 10, 'triad7', true,  'diatonic'),
+      chord('ii°',  'Supertonic dim.',           pcs[1], [0,3,6],  9, 'dim7',   true,  'diatonic'),
+      chord('III',  'Mediant',                   pcs[2], [0,4,7], 11, 'triad7', false, 'diatonic'),
+      chord('iv',   'Subdominant',               pcs[3], [0,3,7], 10, 'triad7', true,  'diatonic'),
+      chord('V',    'Dominant (harm. minor)',    pcs[4], [0,4,7], 10, 'dom7',   false, 'diatonic'),
+      chord('VI',   'Submediant',                pcs[5], [0,4,7], 11, 'triad7', false, 'diatonic'),
+      chord('VII',  'Subtonic',                  pcs[6], [0,4,7], 10, 'triad7', false, 'diatonic'),
+      chord('vii°', 'Leading-tone dim. (harm.)', lt,     [0,3,6],  9, 'dim7',   true,  'diatonic'),
+    );
+    [
+      {of:'III', targetPc: pcs[2]},
+      {of:'iv',  targetPc: pcs[3]},
+      {of:'V',   targetPc: pcs[4]},
+      {of:'VI',  targetPc: pcs[5]},
+      {of:'VII', targetPc: pcs[6]},
+    ].forEach(s => {
+      const domRoot = (s.targetPc + 7) % 12;
+      secondary.push(
+        chord(`V/${s.of}`, `Secondary dom. of ${s.of}`, domRoot, [0,4,7], 10, 'dom7', false, 'secondary'),
+      );
+    });
+  }
+
+  return [...diatonic, ...secondary];
+}
+
+// ═══════════════════ STATE
+
+const S = {
+  mode: 'major', keyIndex: 0, enhOverride: null,
+  luMode: 'major', luKeyIndex: 0,
+  selectedPCs: new Set(),
+};
+
+function cof(forLu) { return (forLu ? S.luMode : S.mode) === 'major' ? COF_MAJ : COF_MIN; }
+function keyObj(forLu) { return cof(forLu)[forLu ? S.luKeyIndex : S.keyIndex]; }
+function useSharp(forLu) {
+  if (!forLu && S.enhOverride !== null) return S.enhOverride;
+  return keyObj(forLu).sharps;
+}
+
+// ═══════════════════ COF DRAW
+
+function drawCOF(svgId, selIdx, mode, onClickFn) {
+  const svg = document.getElementById(svgId);
+  svg.innerHTML = '';
+  const keys = mode === 'major' ? COF_MAJ : COF_MIN;
+  const OR = 128, IR = 62, gap = 0.022;
+
+  for (let i = 0; i < 12; i++) {
+    const a0 = (i/12)*2*Math.PI - Math.PI/2 + gap;
+    const a1 = ((i+1)/12)*2*Math.PI - Math.PI/2 - gap;
+    const am = (a0+a1)/2;
+    const pts = (r,a) => [Math.cos(a)*r, Math.sin(a)*r];
+    const [x0,y0]=pts(IR,a0), [x1,y1]=pts(OR,a0);
+    const [x2,y2]=pts(OR,a1), [x3,y3]=pts(IR,a1);
+    const d = `M${x0} ${y0}L${x1} ${y1}A${OR} ${OR} 0 0 1 ${x2} ${y2}L${x3} ${y3}A${IR} ${IR} 0 0 0 ${x0} ${y0}Z`;
+
+    const isSel = i === selIdx;
+    // Gentle hue wheel
+    const hue = (i * 30) % 360;
+    const fill   = isSel ? `hsl(${hue},35%,70%)` : `hsl(${hue},12%,${91-(i%2)*4}%)`;
+    const stroke = isSel ? `hsl(${hue},45%,42%)` : '#c0b8a8';
+
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class','cof-hit');
+    const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',d); p.setAttribute('fill',fill);
+    p.setAttribute('stroke',stroke); p.setAttribute('stroke-width','1');
+
+    const lx=Math.cos(am)*(IR+OR)/2, ly=Math.sin(am)*(IR+OR)/2;
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',lx); t.setAttribute('y',ly);
+    t.setAttribute('text-anchor','middle'); t.setAttribute('dominant-baseline','central');
+    t.setAttribute('font-family','IM Fell English, Georgia, serif');
+    t.setAttribute('font-size', keys[i].name.length > 2 ? '10' : '12');
+    t.setAttribute('fill', isSel ? '#2a1a08' : '#5a5040');
+    t.setAttribute('pointer-events','none');
+    t.textContent = keys[i].name;
+
+    g.appendChild(p); g.appendChild(t);
+    g.addEventListener('click', () => onClickFn(i));
+    svg.appendChild(g);
+  }
+
+  const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  c.setAttribute('cx','0'); c.setAttribute('cy','0');
+  c.setAttribute('r',String(IR-2));
+  c.setAttribute('fill','#f5f0e8'); c.setAttribute('stroke','#c8bfaa'); c.setAttribute('stroke-width','1');
+  svg.appendChild(c);
+
+  const ct = document.createElementNS('http://www.w3.org/2000/svg','text');
+  ct.setAttribute('x','0'); ct.setAttribute('y','0');
+  ct.setAttribute('text-anchor','middle'); ct.setAttribute('dominant-baseline','central');
+  ct.setAttribute('font-family','Crimson Pro, serif'); ct.setAttribute('font-size','8.5');
+  ct.setAttribute('fill','#8a7d68'); ct.setAttribute('letter-spacing','1.5');
+  ct.textContent = mode === 'major' ? 'MAJOR' : 'MINOR';
+  svg.appendChild(ct);
+}
+
+// ═══════════════════ RENDER CHORD REFERENCE
+
+function renderChords() {
+  const k = keyObj(false), us = useSharp(false);
+  const chords = getDiatonicChords(k.pc, S.mode, us);
+  document.getElementById('key-display').innerHTML =
+    `${k.name} ${S.mode}<small>Key of ${k.name}</small>`;
+  drawCOF('cof-main', S.keyIndex, S.mode, i => { S.keyIndex=i; S.enhOverride=null; renderChords(); });
+
+  const label = S.enhOverride !== null
+    ? (S.enhOverride ? 'Sharps' : 'Flats')
+    : `Auto (${k.sharps?'sharps':'flats'})`;
+  document.getElementById('enh-label').textContent = label;
+
+  const grid = document.getElementById('chord-grid');
+  grid.innerHTML = '';
+
+  let lastSec = null;
+  chords.forEach(ch => {
+    if (ch.section !== lastSec) {
+      lastSec = ch.section;
+      const lbl = document.createElement('div');
+      lbl.className = 'chord-section-label';
+      lbl.textContent = ch.section === 'diatonic' ? 'Diatonic Chords' : 'Secondary Dominants';
+      grid.appendChild(lbl);
+    }
+
+    const isMin = ch.min;
+    const isSec = ch.section === 'secondary';
+    const card = document.createElement('div');
+    card.className = 'chord-card';
+
+    const hdr = document.createElement('div');
+    hdr.className = 'chord-header';
+    const notesSummary = ch.note7
+      ? ch.triadNotes.join(' – ') + ' <span class="note-seventh">(+' + ch.note7 + ')</span>'
+      : ch.triadNotes.join(' – ');
+    hdr.innerHTML = `
+      <span class="rn ${isMin?'minor-rn':''} ${isSec?'secondary':''}">${ch.rn}</span>
+      <span class="chord-name">${ch.name}</span>
+      <span class="chord-notes-sum">${notesSummary}</span>
+      <span class="expand-icon">▼</span>`;
+    hdr.addEventListener('click', () => card.classList.toggle('open'));
+
+    const wrap = document.createElement('div');
+    wrap.className = 'inv-wrap';
+    const tbl = document.createElement('table');
+    tbl.className = 'inv-table';
+    tbl.innerHTML = `<thead><tr>
+      <th>Bass</th><th>Roman numeral</th><th>Inversion</th><th>Chord tones (bass → upper)</th>
+    </tr></thead>`;
+    const tbody = document.createElement('tbody');
+    ch.inversions.forEach(inv => {
+      const tr = document.createElement('tr');
+      tr.className = inv.withSeventh ? 'row-with7' : 'row-triad-only';
+      const nHtml = inv.allNotes.map((n, ni) => {
+        const isBass = ni === 0;
+        const isSeventh = inv.withSeventh && ni === inv.allNotes.length - 1 && !isBass;
+        if (isBass) return `<span class="bass-hl">${n}</span>`;
+        if (isSeventh) return `<span class="note-seventh">(${n})</span>`;
+        return n;
+      }).join(' ');
+      tr.innerHTML = `
+        <td class="td-bass">${inv.bassNote}</td>
+        <td class="td-rn ${isMin?'minor-rn':''} ${isSec?'secondary':''}">${inv.rnDisplay}</td>
+        <td class="td-inv">${inv.inv}</td>
+        <td class="td-notes">${nHtml}</td>`;
+      tbody.appendChild(tr);
+    });
+    tbl.appendChild(tbody);
+    wrap.appendChild(tbl);
+    card.appendChild(hdr); card.appendChild(wrap);
+    grid.appendChild(card);
+  });
+}
+
+// ═══════════════════ RENDER LOOKUP
+
+function renderLookupCOF() {
+  const k = keyObj(true);
+  drawCOF('cof-lookup', S.luKeyIndex, S.luMode, i => {
+    S.luKeyIndex = i;
+    renderLookupCOF();
+    rebuildNotePicker();
+  });
+  document.getElementById('key-display-lu').innerHTML =
+    `${k.name} ${S.luMode}<small>Key of ${k.name}</small>`;
+}
+
+function rebuildNotePicker() {
+  const us = useSharp(true);
+  const picker = document.getElementById('note-picker');
+  picker.innerHTML = '';
+  for (let pc = 0; pc < 12; pc++) {
+    const pill = document.createElement('button');
+    pill.className = 'note-pill' + (S.selectedPCs.has(pc) ? ' selected' : '');
+    pill.textContent = nn(pc, us);
+    pill.addEventListener('click', () => {
+      S.selectedPCs.has(pc) ? S.selectedPCs.delete(pc) : S.selectedPCs.add(pc);
+      updateSelDisplay();
+      rebuildNotePicker();
+    });
+    picker.appendChild(pill);
+  }
+}
+
+function updateSelDisplay() {
+  const us = useSharp(true);
+  const el = document.getElementById('sel-display');
+  el.textContent = S.selectedPCs.size === 0
+    ? 'No notes selected'
+    : 'Selected: ' + [...S.selectedPCs].map(p => nn(p, us)).join(', ');
+}
+
+function clearLookup() {
+  S.selectedPCs.clear();
+  updateSelDisplay();
+  rebuildNotePicker();
+  document.getElementById('lookup-results').innerHTML = '';
+}
+
+function findChord() {
+  const res = document.getElementById('lookup-results');
+  res.innerHTML = '';
+  if (S.selectedPCs.size < 2) {
+    res.innerHTML = '<p class="no-results">Please select at least 2 notes.</p>'; return;
+  }
+
+  const k = keyObj(true), us = useSharp(true);
+  const chords = getDiatonicChords(k.pc, S.luMode, us);
+  const sel = new Set([...S.selectedPCs].map(p => ((p%12)+12)%12));
+
+  const grouped = new Map();
+  chords.forEach(ch => {
+    const chSet = new Set(ch.chordPcs.map(p => ((p%12)+12)%12));
+    if (![...sel].every(p => chSet.has(p))) return;
+    if (!grouped.has(ch.rn)) grouped.set(ch.rn, {ch, matchedInvs: []});
+    ch.inversions.forEach(inv => grouped.get(ch.rn).matchedInvs.push(inv));
+  });
+
+  if (grouped.size === 0) {
+    res.innerHTML = '<p class="no-results">No diatonic or secondary dominant match found in this key. Try a different key, or check the note selection.</p>';
+    return;
+  }
+
+  grouped.forEach(({ch, matchedInvs}) => {
+    const isMin = ch.min, isSec = ch.section === 'secondary';
+    const card = document.createElement('div');
+    card.className = 'result-card';
+    const h3 = document.createElement('h3');
+    h3.className = (isMin?'minor-rn ':'')+(isSec?'secondary':'');
+    h3.textContent = ch.rn;
+    const meta = document.createElement('p');
+    meta.className = 'result-meta';
+    meta.textContent = `${ch.name} · full chord: ${ch.chordNotes.join(' – ')}`;
+    card.appendChild(h3); card.appendChild(meta);
+    matchedInvs.forEach(inv => {
+      const line = document.createElement('p');
+      line.className = 'result-inv-line';
+      const nHtml = inv.allNotes.map((n, ni) => {
+        const isBass = ni === 0;
+        const isSeventh = inv.withSeventh && ni === inv.allNotes.length - 1 && !isBass;
+        if (isBass) return `<span class="bass-hl">${n}</span>`;
+        if (isSeventh) return `<span class="note-seventh">(${n})</span>`;
+        return n;
+      }).join(' ');
+      line.innerHTML = `<strong>${inv.rnDisplay}</strong> — ${inv.inv} &nbsp;·&nbsp; ${nHtml}`;
+      card.appendChild(line);
+    });
+    res.appendChild(card);
+  });
+}
+
+// ═══════════════════ CONTROLS
+
+function setMode(mode) {
+  S.mode = mode; S.keyIndex = 0; S.enhOverride = null;
+  document.getElementById('btn-major').classList.toggle('active', mode==='major');
+  document.getElementById('btn-minor').classList.toggle('active', mode==='minor');
+  renderChords();
+}
+
+function setModeLookup(mode) {
+  S.luMode = mode; S.luKeyIndex = 0;
+  document.getElementById('btn-major-lu').classList.toggle('active', mode==='major');
+  document.getElementById('btn-minor-lu').classList.toggle('active', mode==='minor');
+  renderLookupCOF();
+  rebuildNotePicker();
+  updateSelDisplay();
+}
+
+function toggleEnharmonic() {
+  const k = keyObj(false);
+  S.enhOverride = S.enhOverride === null ? !k.sharps : !S.enhOverride;
+  renderChords();
+}
+
+function showTab(btn, id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ═══════════════════ INIT
+
+renderChords();
+renderLookupCOF();
+rebuildNotePicker();
+</script>
+</body>
+</html>
