@@ -301,18 +301,31 @@ h1 {
 /* ── Key Signature ───────────── */
 /* KEY SIG DISABLED: #keysig-svg { display: block; margin: 10px auto 0; overflow: visible; } */
 
-/* ── Landscape compact ───────── */
-@media (orientation: landscape) and (max-height: 560px) {
-  body { padding: 8px 12px 24px; }
+/* ── COF SVG centring (all orientations) ── */
+#cof-main, #cof-lookup, #cof-bass {
+  display: block;
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+  margin: 0 auto;
+}
+
+/* ── Landscape: resize COF for all landscape orientations ── */
+@media (orientation: landscape) {
+  #cof-main, #cof-lookup, #cof-bass {
+    max-width: 208px;
+  }
+  .layout { grid-template-columns: 216px 1fr; gap: 10px; }
+  .panel { padding: 8px 4px; }
+}
+
+/* ── Landscape compact (short screens) ───────── */
+@media (orientation: landscape) and (max-height: 620px) {
+  body { padding: 8px 8px 24px; }
   .site-header { margin-bottom: 8px; padding-bottom: 8px; }
   h1 { font-size: 1.5rem; }
   .site-header p { display: none; }
-  .layout { grid-template-columns: 220px 1fr; gap: 12px; }
-  .panel { padding: 10px 8px; }
-  #cof-main, #cof-lookup, #cof-bass {
-    width: 200px !important;
-    height: 200px !important;
-  }
+  .panel-title { padding-bottom: 6px; margin-bottom: 8px; }
 }
 </style>
 </head>
@@ -336,7 +349,7 @@ h1 {
     <div>
       <div class="panel">
         <div class="panel-title">Select Key</div>
-        <svg id="cof-main" viewBox="-140 -140 280 280" width="260" height="260" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto"></svg>
+        <svg id="cof-main" viewBox="-148 -148 296 296" xmlns="http://www.w3.org/2000/svg"></svg>
         <div class="mode-row">
           <button class="mode-btn active" id="btn-major" onclick="setMode('major')">Major</button>
           <button class="mode-btn" id="btn-minor" onclick="setMode('minor')">Minor</button>
@@ -361,7 +374,7 @@ h1 {
     <div>
       <div class="panel">
         <div class="panel-title">Key</div>
-        <svg id="cof-lookup" viewBox="-140 -140 280 280" width="260" height="260" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto"></svg>
+        <svg id="cof-lookup" viewBox="-148 -148 296 296" xmlns="http://www.w3.org/2000/svg"></svg>
         <div class="mode-row">
           <button class="mode-btn active" id="btn-major-lu" onclick="setModeLookup('major')">Major</button>
           <button class="mode-btn" id="btn-minor-lu" onclick="setModeLookup('minor')">Minor</button>
@@ -389,7 +402,7 @@ h1 {
     <div>
       <div class="panel">
         <div class="panel-title">Key</div>
-        <svg id="cof-bass" viewBox="-140 -140 280 280" width="260" height="260" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto"></svg>
+        <svg id="cof-bass" viewBox="-148 -148 296 296" xmlns="http://www.w3.org/2000/svg"></svg>
         <div class="mode-row">
           <button class="mode-btn active" id="btn-major-bs" onclick="setModeBass('major')">Major</button>
           <button class="mode-btn" id="btn-minor-bs" onclick="setModeBass('minor')">Minor</button>
