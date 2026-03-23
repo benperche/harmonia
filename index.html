@@ -426,10 +426,20 @@ h1 {
   <strong>Figured bass suffixes:</strong> No suffix = root position · ⁶ = 1st inversion (3rd in bass) · ⁶₄ = 2nd inversion (5th in bass) · ⁷ = root position 7th chord · ⁶₅ = 1st inv. 7th · ⁴₃ = 2nd inv. 7th · ⁴₂ = 3rd inv. 7th (7th in bass) · °⁷ °⁶₅ °⁴₃ °⁴₂ = diminished 7th and its inversions.
   <br><br>
   <strong>Special chords:</strong> Aug. 6th chords (It⁺⁶, Fr⁴₃, Ger⁶₅) have b̂6 in the bass and ♯^4 as the top note, creating an augmented 6th interval that resolves outward to the dominant. CT chords share a common tone with the target harmony — the sustained note is shown in the chord name.
+  <br><br>
+  <span style="color:var(--ink3)">Harmonicon <span id="footer-version"></span> · Created by Ben Perche with <a href="https://claude.ai" style="color:var(--ink3)">Claude.ai</a></span>
 </p>
 </div>
 
 <script>
+// ═══════════════════════════════════════════════════════════════════
+// VERSION — update this when releasing changes
+// Convention: MAJOR.MINOR.PATCH
+//   MAJOR: significant new features or breaking changes
+//   MINOR: new chords, tabs, or notable improvements
+//   PATCH: bug fixes, spelling corrections, small UI tweaks
+// ═══════════════════════════════════════════════════════════════════
+const VERSION = '1.1.0';
 // ═══════════════════ PITCH CLASSES & SPELLINGS
 
 const SH = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -1504,6 +1514,7 @@ function showTab(btn, id) {
 
 // ═══════════════════ INIT
 
+document.getElementById('footer-version').textContent = 'v' + VERSION;
 renderChords();
 renderLookupCOF();
 rebuildNotePicker();
