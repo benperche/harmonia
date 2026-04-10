@@ -1215,6 +1215,49 @@ function getChordFunction(ch) {
   return 'other';
 }
 
+function buildInvWrap(ch) {
+  const isMin   = ch.min;
+  const isSec   = ch.section === 'secondary';
+  const isSpec  = ch.section === 'aug6' || ch.section === 'ct';
+  const isFixed = ch.fbType === 'fixed';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'inv-wrap';
+  const tbl = document.createElement('table');
+  tbl.className = 'inv-table';
+
+  tbl.innerHTML = isFixed
+    ? `<thead><tr><th>Bass</th><th>Chord name</th><th>Chord tones</th></tr></thead>`
+    : `<thead><tr><th>Bass</th><th>Roman numeral</th><th>Inversion</th><th>Chord tones</th></tr></thead>`;
+
+  const tbody = document.createElement('tbody');
+  ch.inversions.forEach(inv => {
+    const tr = document.createElement('tr');
+    const nHtml = inv.allNotes.map(n => {
+      if (n === inv.bassNote && !inv.note7inBass) return `<span class="bass-hl">${n}</span>`;
+      if (inv.note7inBass && n === inv.note7) return `<span class="bass-hl">${n}</span>`;
+      if (inv.note7 && n === inv.note7 && !inv.note7inBass) return `<span class="note-seventh">(7th: ${n})</span>`;
+      return n;
+    }).join(' ');
+    if (isFixed) {
+      tr.innerHTML = `
+        <td class="td-bass">${inv.bassNote}</td>
+        <td class="td-rn ${isSpec?'special':''}">${inv.rnDisplay}</td>
+        <td class="td-notes">${nHtml}</td>`;
+    } else {
+      tr.innerHTML = `
+        <td class="td-bass">${inv.bassNote}</td>
+        <td class="td-rn ${isMin?'minor-rn':''} ${isSec?'secondary':''} ${isSpec?'special':''}">${inv.rnDisplay}</td>
+        <td class="td-inv">${inv.inv}</td>
+        <td class="td-notes">${nHtml}</td>`;
+    }
+    tbody.appendChild(tr);
+  });
+  tbl.appendChild(tbody);
+  wrap.appendChild(tbl);
+  return wrap;
+}
+
 function renderChordsFunctional(chords, grid) {
   const groups = { tonic: [], predominant: [], dominant: [], other: [] };
   chords.forEach(ch => { groups[getChordFunction(ch)].push(ch); });
@@ -1294,41 +1337,7 @@ function renderChordsFunctional(chords, grid) {
       tileHdr.appendChild(expIcon);
 
       // ── Inversion table (hidden until expanded) ──
-      const wrap = document.createElement('div');
-      wrap.className = 'inv-wrap';
-      const tbl = document.createElement('table');
-      tbl.className = 'inv-table';
-
-      const isFixed = ch.fbType === 'fixed';
-      tbl.innerHTML = isFixed
-        ? `<thead><tr><th>Bass</th><th>Chord name</th><th>Chord tones</th></tr></thead>`
-        : `<thead><tr><th>Bass</th><th>Roman numeral</th><th>Inversion</th><th>Chord tones</th></tr></thead>`;
-
-      const tbody = document.createElement('tbody');
-      ch.inversions.forEach(inv => {
-        const tr = document.createElement('tr');
-        const nHtml = inv.allNotes.map(n => {
-          if (n === inv.bassNote && !inv.note7inBass) return `<span class="bass-hl">${n}</span>`;
-          if (inv.note7inBass && n === inv.note7) return `<span class="bass-hl">${n}</span>`;
-          if (inv.note7 && n === inv.note7 && !inv.note7inBass) return `<span class="note-seventh">(7th: ${n})</span>`;
-          return n;
-        }).join(' ');
-        if (isFixed) {
-          tr.innerHTML = `
-            <td class="td-bass">${inv.bassNote}</td>
-            <td class="td-rn ${isSpec?'special':''}">${inv.rnDisplay}</td>
-            <td class="td-notes">${nHtml}</td>`;
-        } else {
-          tr.innerHTML = `
-            <td class="td-bass">${inv.bassNote}</td>
-            <td class="td-rn ${isMin?'minor-rn':''} ${isSec?'secondary':''}">${inv.rnDisplay}</td>
-            <td class="td-inv">${inv.inv}</td>
-            <td class="td-notes">${nHtml}</td>`;
-        }
-        tbody.appendChild(tr);
-      });
-      tbl.appendChild(tbody);
-      wrap.appendChild(tbl);
+      const wrap = buildInvWrap(ch);
 
       tile.appendChild(tileHdr);
       tile.appendChild(wrap);
@@ -1341,221 +1350,6 @@ function renderChordsFunctional(chords, grid) {
 }
 
 
-/* KEY SIG DISABLED
-// ═══════════════════ KEY SIGNATURE RENDERER
-// Draws a treble clef + staff + sharps or flats on a small SVG.
-// Staff uses 5 lines, line spacing = S (staff space). Middle C ledger below.
-// Treble clef drawn as an SVG path scaled to fit.
-
-const KEYSIG_S = 8;           // staff space in px (distance between adjacent lines)
-const KEYSIG_STAFF_LINES = 5;
-
-// Sharp positions on treble clef staff (staff spaces from top line, 0=top line, 8=bottom line)
-// Order: F C G D A E B  (standard sharp order)
-// Staff positions (in half-spaces from TOP LINE, downward):
-//   Top line = 0, next space = 1, next line = 2, ... bottom line = 8
-// Treble clef lines (bottom to top): E4 G4 B4 D5 F5
-// So top line (F5)=0, space D5=1, line B4=2, space G4=3, line E4=4 (=8 half-spaces from top at S=8 => 0..8)
-// Sharp staff positions (treble, 0=top staff line, unit = half staff-space = S/2):
-//   F5=top line, C5=3rd space, G5=above top (ledger), D5=2nd space, A4=3rd line, E5=1st space, B4=2nd line
-// In terms of lines (each line = 2 half-spaces apart):
-//   line 1 (top)=0, space=1, line2=2, space=3, line3(mid)=4, space=5, line4=6, space=7, line5(bot)=8
-// Sharp positions (treble): F#=top(0), C#=space3(3), G#=above-top(-2→shown as 0-2=-2, wrap to +5=5 above), 
-//   D#=space1(1), A#=space4(7--> actually line3+space=5), E#=space2(2-- actually line2+space, =3?), B#=line2(2)
-// Let me use a clear system: y offset in units of (S/2) from the TOP staff line, positive = downward.
-// Treble clef note positions (half-spaces below top line F5):
-//   F5=0, E5=1, D5=2, C5=3, B4=4, A4=5, G4=6, F4=7, E4=8
-// Sharp order F C G D A E B:
-//   F# → F5 = 0
-//   C# → C5 = 3  (but conventional: placed at C5 which is 3rd space = 3 half-spaces below top)
-//   G# → G5 = above top = -2 (or equivalently 5 below, using octave equiv: G4=6 but G5=-2... use -2 display as top-2)
-//     → conventionally shown 1 space above top staff = -2 half-spaces
-//   D# → D5 = 2 (but convention is a 3rd lower for spacing: D4 would be 9, so D5=2)
-//     → conventional: 1 half-space below top = 1
-//   A# → A4 = 5
-//   E# → E5 = 1  → conventional: 4 half-spaces below top = 4? Actually E4=8, E5=1... use E4 range: 8? 
-//     → conventional for E#: placed at line 4 = 6? Let me just use the standard lookup table.
-
-// Standard treble clef key signature accidental positions:
-// expressed as (half-spaces below the TOP staff line), where staff goes 0..8 in half-steps
-// Sharp order: F C G D A E B
-const SHARP_POS_TREBLE = [0, 3, -2, 1, 4, -1, 2];  // half-spaces below top line (F5 line)
-// Flat order:  B E A D G C F
-const FLAT_POS_TREBLE  = [4, 1, 5, 2, 6, 3, 7];   // half-spaces below top line
-
-// Number of sharps/flats for each key (major), indexed by COF position 0..11
-// COF_MAJ order: C G D A E B F# Db Ab Eb Bb F
-const KEY_SHARPS = [0, 1, 2, 3, 4, 5, 6, 0, 0, 0,  0,  0];
-const KEY_FLATS  = [0, 0, 0, 0, 0, 0, 0, 5, 4, 3,  2,  1];
-
-// For minor keys (COF_MIN order: A E B F# C# G# D# Bb F C G D)
-const KEY_SHARPS_MINOR = [0, 1, 2, 3, 4, 5, 6, 0, 0, 0, 0, 0];
-const KEY_FLATS_MINOR  = [0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 0]; // wait — let me recalc
-// Minor key sig = same as relative major:
-// A minor = C major = 0 acc; E minor = G major = 1#; B minor = D major = 2#
-// F# minor = A major = 3#; C# minor = E major = 4#; G# minor = B major = 5#; D# minor = F# major = 6#
-// Bb minor = Db major = 5b; F minor = Ab major = 4b; C minor = Eb major = 3b; G minor = Bb major = 2b; D minor = F major = 1b
-// COF_MIN: A  E  B  F# C# G# D# Bb F  C  G  D
-const MINOR_SHARPS = [0, 1,  2,  3,  4,  5,  6,  0, 0, 0, 0, 0];
-const MINOR_FLATS  = [0, 0,  0,  0,  0,  0,  0,  5, 4, 3, 2, 1];
-
-function drawKeySig(svgId, keyIndex, mode) {
-  const svg = document.getElementById(svgId);
-  if (!svg) return;
-
-  const S  = KEYSIG_S;       // staff space
-  const HS = S / 2;          // half staff space
-  const W  = 220;            // svg width
-  const TOP = 18;            // y of top staff line
-
-  const nSharps = mode === 'major' ? KEY_SHARPS[keyIndex]       : MINOR_SHARPS[keyIndex];
-  const nFlats  = mode === 'major' ? KEY_FLATS[keyIndex]        : MINOR_FLATS[keyIndex];
-
-  // Height: staff (4*S) + some padding top/bottom
-  const H = TOP + 4 * S + 18;
-  svg.setAttribute('width', W);
-  svg.setAttribute('height', H);
-  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-  svg.innerHTML = '';
-
-  const ink = '#2a2218';
-
-  function y(halfSpacesBelow) { return TOP + halfSpacesBelow * HS; }
-
-  // ── 5 staff lines ──
-  for (let i = 0; i < 5; i++) {
-    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
-    line.setAttribute('x1', '0'); line.setAttribute('x2', String(W));
-    line.setAttribute('y1', String(TOP + i * S)); line.setAttribute('y2', String(TOP + i * S));
-    line.setAttribute('stroke', ink); line.setAttribute('stroke-width', '0.9');
-    svg.appendChild(line);
-  }
-
-  // ── Treble clef (SVG path, hand-crafted) ──
-  // We draw it using a scaled transform. The clef sits with its curl on the G line (2nd from bottom = line 4 = half-space 6 from top).
-  // Using a simplified treble clef path that looks clean at small sizes.
-  const clefX = 6;
-  const gLineY = y(6); // G4 line = 2nd from bottom
-
-  // Treble clef as a scaled glyph path (designed in a 30×80 box, origin at G-line curl)
-  // This is a hand-crafted simplified treble clef outline path
-  const clefScale = S / 8.5;
-  const clefGroup = document.createElementNS('http://www.w3.org/2000/svg','g');
-  clefGroup.setAttribute('transform', `translate(${clefX}, ${gLineY}) scale(${clefScale})`);
-
-  const clefPath = document.createElementNS('http://www.w3.org/2000/svg','path');
-  // Path designed with origin at G-line, units ~px at scale=1
-  // Simplified but recognisable treble clef:
-  clefPath.setAttribute('d', `
-    M 8,0
-    C 8,-6 14,-14 10,-22
-    C 7,-30 -2,-30 -2,-20
-    C -2,-10 8,-8 12,-16
-    C 16,-24 12,-38 8,-44
-    C 4,-50 -4,-52 -8,-46
-    C -12,-40 -10,-28 -4,-24
-    C 2,-20 10,-22 12,-28
-    M 8,-44
-    C 10,-50 10,-58 8,-62
-    C 6,-66 4,-68 2,-70
-    M 8,0
-    C 8,8 4,14 0,16
-    C -4,18 -8,14 -6,10
-    C -4,6 0,6 2,4
-    C 6,2 8,0 8,0
-  `);
-  clefPath.setAttribute('fill', 'none');
-  clefPath.setAttribute('stroke', ink);
-  clefPath.setAttribute('stroke-width', String(2 / clefScale));
-  clefPath.setAttribute('stroke-linecap', 'round');
-  clefPath.setAttribute('stroke-linejoin', 'round');
-  clefGroup.appendChild(clefPath);
-  svg.appendChild(clefGroup);
-
-  // ── Accidentals ──
-  const accX0 = clefX + 22 * clefScale + 6;  // start x for first accidental
-  const accSpacing = S * 1.1;
-
-  if (nSharps > 0) {
-    for (let i = 0; i < nSharps; i++) {
-      const pos = SHARP_POS_TREBLE[i];
-      const cx  = accX0 + i * accSpacing;
-      const cy  = y(pos);
-      drawSharp(svg, cx, cy, S, ink);
-    }
-  } else if (nFlats > 0) {
-    for (let i = 0; i < nFlats; i++) {
-      const pos = FLAT_POS_TREBLE[i];
-      const cx  = accX0 + i * accSpacing;
-      const cy  = y(pos);
-      drawFlat(svg, cx, cy, S, ink);
-    }
-  }
-
-  // C major / A minor label
-  if (nSharps === 0 && nFlats === 0) {
-    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
-    t.setAttribute('x', String(accX0));
-    t.setAttribute('y', String(TOP + 2 * S + 4));
-    t.setAttribute('font-family', 'Crimson Pro, serif');
-    t.setAttribute('font-size', '11');
-    t.setAttribute('fill', '#8a7d68');
-    t.textContent = '(no accidentals)';
-    svg.appendChild(t);
-  }
-}
-
-function drawSharp(svg, cx, cy, S, ink) {
-  // Sharp: two vertical lines + two horizontal bars (angled slightly)
-  const vOff = S * 0.85;
-  const hW   = S * 0.5;
-  const hOff = S * 0.18;
-  const ang  = S * 0.1; // slight upward angle on bars
-
-  // Vertical lines
-  [-hW*0.4, hW*0.4].forEach(dx => {
-    const vl = document.createElementNS('http://www.w3.org/2000/svg','line');
-    vl.setAttribute('x1', String(cx + dx)); vl.setAttribute('y1', String(cy - vOff));
-    vl.setAttribute('x2', String(cx + dx)); vl.setAttribute('y2', String(cy + vOff));
-    vl.setAttribute('stroke', ink); vl.setAttribute('stroke-width', '1.1');
-    svg.appendChild(vl);
-  });
-
-  // Horizontal bars (slightly angled, thicker)
-  [-hOff, hOff].forEach(dy => {
-    const hl = document.createElementNS('http://www.w3.org/2000/svg','line');
-    hl.setAttribute('x1', String(cx - hW)); hl.setAttribute('y1', String(cy + dy + ang));
-    hl.setAttribute('x2', String(cx + hW)); hl.setAttribute('y2', String(cy + dy - ang));
-    hl.setAttribute('stroke', ink); hl.setAttribute('stroke-width', '1.8');
-    svg.appendChild(hl);
-  });
-}
-
-function drawFlat(svg, cx, cy, S, ink) {
-  // Flat: vertical stem + rounded bulge to the right
-  const stemTop = cy - S * 1.1;
-  const stemBot = cy + S * 0.45;
-  const bulgeH  = S * 0.85;
-  const bulgeW  = S * 0.55;
-
-  // Stem
-  const stem = document.createElementNS('http://www.w3.org/2000/svg','line');
-  stem.setAttribute('x1', String(cx)); stem.setAttribute('y1', String(stemTop));
-  stem.setAttribute('x2', String(cx)); stem.setAttribute('y2', String(stemBot));
-  stem.setAttribute('stroke', ink); stem.setAttribute('stroke-width', '1.1');
-  svg.appendChild(stem);
-
-  // Bulge (teardrop/D-shape using a cubic bezier path)
-  const bTop = cy - S * 0.1;
-  const bBot = cy + S * 0.55;
-  const bMid = (bTop + bBot) / 2;
-  const flatPath = document.createElementNS('http://www.w3.org/2000/svg','path');
-  flatPath.setAttribute('d', `M ${cx},${bTop} C ${cx + bulgeW * 1.3},${bTop} ${cx + bulgeW * 1.3},${bBot} ${cx},${bBot} Z`);
-  flatPath.setAttribute('fill', ink);
-  svg.appendChild(flatPath);
-}
-KEY SIG DISABLED */
-
 function renderChords() {
   const k = keyObj(false), us = useSharp(false);
   const chords = getDiatonicChords(k.pc, S.mode, us);
@@ -1566,8 +1360,6 @@ function renderChords() {
     S.enhKey = enh ? { name: enh.name, pc: enh.pc, sharps: enh.sharps } : null;
     renderChords();
   });
-  // KEY SIG DISABLED: drawKeySig('keysig-svg', S.keyIndex, S.mode);
-
   const label = { auto: `Auto (${k.sharps?'sharps':'flats'})`, sharps: 'Always sharps', flats: 'Always flats' }[S.spellingPref];
   document.getElementById('enh-label').textContent = label;
 
@@ -1618,53 +1410,7 @@ function renderChords() {
       <span class="expand-icon">▼</span>`;
     hdr.addEventListener('click', () => card.classList.toggle('open'));
 
-    const wrap = document.createElement('div');
-    wrap.className = 'inv-wrap';
-    const tbl = document.createElement('table');
-    tbl.className = 'inv-table';
-
-    const isFixed = ch.fbType === 'fixed';
-    tbl.innerHTML = isFixed
-      ? `<thead><tr><th>Bass</th><th>Chord name</th><th>Chord tones</th></tr></thead>`
-      : `<thead><tr><th>Bass</th><th>Roman numeral</th><th>Inversion</th><th>Chord tones</th></tr></thead>`;
-
-    const tbody = document.createElement('tbody');
-    ch.inversions.forEach(inv => {
-      const tr = document.createElement('tr');
-      // Chord tones: bass underlined, 7th labelled "(7th: X)" unless it's the bass note
-      const nHtml = inv.allNotes.map(n => {
-        if (n === inv.bassNote && !inv.note7inBass) {
-          // bass note from the triad — underline it
-          return `<span class="bass-hl">${n}</span>`;
-        }
-        if (inv.note7inBass && n === inv.note7) {
-          // 7th is the bass in 3rd inversion — underline it, no brackets
-          return `<span class="bass-hl">${n}</span>`;
-        }
-        if (inv.note7 && n === inv.note7 && !inv.note7inBass) {
-          // 7th is not the bass — label it clearly
-          return `<span class="note-seventh">(7th: ${n})</span>`;
-        }
-        return n;
-      }).join(' ');
-
-      if (isFixed) {
-        tr.innerHTML = `
-          <td class="td-bass">${inv.bassNote}</td>
-          <td class="td-rn ${isSpec?'special':''}">${inv.rnDisplay}</td>
-          <td class="td-notes">${nHtml}</td>`;
-      } else {
-        tr.innerHTML = `
-          <td class="td-bass">${inv.bassNote}</td>
-          <td class="td-rn ${isMin?'minor-rn':''} ${isSec?'secondary':''}">${inv.rnDisplay}</td>
-          <td class="td-inv">${inv.inv}</td>
-          <td class="td-notes">${nHtml}</td>`;
-      }
-      tbody.appendChild(tr);
-    });
-    tbl.appendChild(tbody);
-    wrap.appendChild(tbl);
-    card.appendChild(hdr); card.appendChild(wrap);
+    card.appendChild(hdr); card.appendChild(buildInvWrap(ch));
     grid.appendChild(card);
   });
 }
