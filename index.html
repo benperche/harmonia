@@ -405,7 +405,7 @@ h1 {
 }
 .mode-cell:last-child { border-right: none; }
 .mode-cell.is-root    { background: color-mix(in srgb, var(--mcolor, var(--border)) 8%, transparent); }
-.mode-cell.is-altered { background: var(--bg2); }
+.mode-cell.is-altered { background: color-mix(in srgb, var(--mcolor, var(--border)) 18%, transparent); }
 .mode-note { font-family: 'IM Fell English', serif; font-size: 1.0rem; color: var(--ink); line-height: 1; }
 .mode-cell.is-root .mode-note { color: var(--mcolor, var(--red)); }
 .mode-deg { font-size: 0.58rem; color: var(--ink3); }
@@ -553,6 +553,10 @@ h1 {
       <div class="panel">
         <div class="panel-title">Root Note</div>
         <svg id="cof-modes" viewBox="-168 -168 336 336" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div class="mode-row">
+          <button class="mode-btn active" id="btn-major-md" onclick="setModeRef('major')">Major</button>
+          <button class="mode-btn" id="btn-minor-md" onclick="setModeRef('minor')">Minor</button>
+        </div>
         <div class="key-display" id="key-display-md">C<small>Root note</small></div>
       </div>
       <div class="panel">
@@ -1198,6 +1202,7 @@ const S = {
   mdKeyIndex: 0,
   mdEnhKey: null,
   modeOrder: 'scale',  // 'scale' | 'brightness'
+  mdRef: 'major',      // 'major' (Ionian) | 'minor' (Aeolian) — shading reference
 };
 
 function cof(forLu) { return (forLu ? S.luMode : S.mode) === 'major' ? COF_MAJ : COF_MIN; }
@@ -1612,6 +1617,17 @@ function setModeOrder(order) {
   renderModes();
 }
 
+function setModeRef(ref) {
+  S.mdRef = ref;
+  document.getElementById('btn-major-md').classList.toggle('active', ref === 'major');
+  document.getElementById('btn-minor-md').classList.toggle('active', ref === 'minor');
+  renderModes();
+}
+
+// Reference intervals for altered-note shading
+const REF_IONIAN  = [0, 2, 4, 5, 7, 9, 11]; // major
+const REF_AEOLIAN = [0, 2, 3, 5, 7, 8, 10]; // natural minor
+
 function renderModes() {
   const grid = document.getElementById('modes-grid');
   if (!grid) return;
@@ -1624,6 +1640,8 @@ function renderModes() {
   const ordered = S.modeOrder === 'brightness'
     ? [...MODES].sort((a, b) => b.brightness - a.brightness)
     : MODES;
+
+  const refIntervals = S.mdRef === 'major' ? REF_IONIAN : REF_AEOLIAN;
 
   ordered.forEach(mode => {
     const scalePcs = mode.intervals.map(iv => (rootPc + iv) % 12);
@@ -1659,7 +1677,7 @@ function renderModes() {
       if (chordSym.includes('°')) chClass = 'ch-dim';
       else if (bare[0] && bare[0] === bare[0].toLowerCase()) chClass = 'ch-minor';
 
-      const isAltered = /[♭♯]/.test(mode.degs[d]);
+      const isAltered = mode.intervals[d] !== refIntervals[d];
       const cell = document.createElement('div');
       cell.className = 'mode-cell' + (d === 0 ? ' is-root' : '') + (isAltered ? ' is-altered' : '');
       cell.innerHTML =
