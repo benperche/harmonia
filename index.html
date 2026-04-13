@@ -1600,8 +1600,14 @@ function renderBassCOF() {
 
 function renderModesCOF() {
   const k = keyObjMd();
-  drawCOF('cof-modes', S.mdKeyIndex, 'major', (i, enh) => {
-    S.mdKeyIndex = i;
+  const cofArr = S.mdRef === 'major' ? COF_MAJ : COF_MIN;
+  // Find the selection index in whichever COF array is currently shown
+  const selIdx = cofArr.findIndex(ky => ky.pc === k.pc);
+  drawCOF('cof-modes', selIdx !== -1 ? selIdx : 0, S.mdRef, (i, enh) => {
+    // Always store the selection as a COF_MAJ index so the PC is stable
+    const clicked = enh || cofArr[i];
+    const majIdx  = COF_MAJ.findIndex(ky => ky.pc === clicked.pc);
+    S.mdKeyIndex = majIdx !== -1 ? majIdx : 0;
     S.mdEnhKey = enh ? { name: enh.name, pc: enh.pc, sharps: enh.sharps } : null;
     renderModesCOF();
     renderModes();
@@ -1619,8 +1625,10 @@ function setModeOrder(order) {
 
 function setModeRef(ref) {
   S.mdRef = ref;
+  S.mdEnhKey = null; // enharmonic context changes with the COF
   document.getElementById('btn-major-md').classList.toggle('active', ref === 'major');
   document.getElementById('btn-minor-md').classList.toggle('active', ref === 'minor');
+  renderModesCOF();
   renderModes();
 }
 
